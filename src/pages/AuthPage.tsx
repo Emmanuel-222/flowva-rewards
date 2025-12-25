@@ -1,21 +1,31 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff, Gift } from 'lucide-react'
 
 export default function AuthPage() {
   const [searchParams] = useSearchParams()
+  const location = useLocation()
   const referralCode = searchParams.get('ref')
   
-  // Auto-switch to signup mode if referral code is present
-  const [isSignUp, setIsSignUp] = useState(!!referralCode)
+  // Check if user came via /signup route or has referral code
+  const shouldStartWithSignup = location.pathname === '/signup' || !!referralCode
+  
+  const [isSignUp, setIsSignUp] = useState(shouldStartWithSignup)
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [loading, setLoading] = useState(false)
   const { signIn, signUp } = useAuth()
+
+  // Auto-switch to signup mode if referral code is present or on /signup route
+  useEffect(() => {
+    if (shouldStartWithSignup) {
+      setIsSignUp(true)
+    }
+  }, [shouldStartWithSignup])
 
   // Show referral code notification
   useEffect(() => {

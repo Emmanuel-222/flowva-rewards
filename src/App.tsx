@@ -21,6 +21,10 @@ function App() {
         path="/auth" 
         element={user ? <Navigate to="/rewards" replace /> : <AuthPage />} 
       />
+      <Route 
+        path="/signup" 
+        element={user ? <Navigate to="/rewards" replace /> : <AuthPage />} 
+      />
       <Route
         path="/*"
         element={
