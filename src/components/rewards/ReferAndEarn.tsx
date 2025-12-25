@@ -28,7 +28,7 @@ export default function ReferAndEarn() {
     enabled: !!user,
   })
 
-  const referralLink = `https://app.flowvahub.com/signup/?ref=${profile?.referral_code || ''}`
+  const referralLink = `https://flowva-rewards-two.vercel.app/signup?ref=${profile?.referral_code || ''}`
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(referralLink)
