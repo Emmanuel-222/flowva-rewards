@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('referrals')
         .insert({
           referrer_id: referrer.id,
-          referred_id: referredUserId,
+          referred_user_id: referredUserId,
           status: 'completed',
         })
 
