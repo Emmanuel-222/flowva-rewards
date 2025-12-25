@@ -8,7 +8,7 @@ interface AuthContextType {
   profile: Profile | null
   session: Session | null
   loading: boolean
-  signUp: (email: string, password: string, displayName: string) => Promise<{ error: Error | null }>
+  signUp: (email: string, password: string, displayName: string, referralCode?: string) => Promise<{ error: Error | null }>
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
 }
@@ -46,7 +46,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return `${base}${random}`
   }
 
-  const createProfile = async (userId: string, email: string, displayName: string): Promise<Profile | null> => {
+  const processReferral = async (referredUserId: string, referralCode: string) => {
+    try {
+      // Find the referrer by their referral code
+      const { data: referrer, error: referrerError } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .eq('referral_code', referralCode)
+        .single()
+
+      if (referrerError || !referrer) {
+        console.log('Referral code not found:', referralCode)
+        return
+      }
+
+      // Create referral record
+      const { error: referralError } = await supabase
+        .from('referrals')
+        .insert({
+          referrer_id: referrer.id,
+          referred_id: referredUserId,
+          status: 'completed',
+        })
+
+      if (referralError) {
+        console.error('Error creating referral:', referralError)
+        return
+      }
+
+      // Award points to the referrer
+      const { error: pointsError } = await supabase
+        .from('point_transactions')
+        .insert({
+          user_id: referrer.id,
+          type: 'referral',
+          points_delta: 25,
+          description: `Referral bonus - someone joined using your link!`,
+        })
+
+      if (pointsError) {
+        console.error('Error awarding referral points:', pointsError)
+      } else {
+        console.log(`Awarded 25 points to referrer ${referrer.id}`)
+      }
+    } catch (err) {
+      console.error('processReferral exception:', err)
+    }
+  }
+
+  const createProfile = async (userId: string, email: string, displayName: string, referredByCode?: string): Promise<Profile | null> => {
     try {
       const referralCode = generateReferralCode(email)
 
@@ -66,6 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null
       }
 
+      // Create daily streak record
       supabase.from('daily_streaks').insert({
         user_id: userId,
         current_streak: 0,
@@ -74,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (res.error) console.error('Error creating streak:', res.error)
       })
 
+      // Award signup bonus
       supabase.from('point_transactions').insert({
         user_id: userId,
         type: 'signup',
@@ -82,6 +132,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }).then(res => {
         if (res.error) console.error('Error creating points:', res.error)
       })
+
+      // Process referral if user signed up with a referral code
+      if (referredByCode) {
+        processReferral(userId, referredByCode)
+      }
 
       return data as Profile
     } catch (err) {
@@ -157,7 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const signUp = async (email: string, password: string, displayName: string) => {
+  const signUp = async (email: string, password: string, displayName: string, referralCode?: string) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -169,7 +224,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (data.user) {
-        const profileData = await createProfile(data.user.id, email, displayName)
+        const profileData = await createProfile(data.user.id, email, displayName, referralCode)
         setProfile(profileData)
       }
 

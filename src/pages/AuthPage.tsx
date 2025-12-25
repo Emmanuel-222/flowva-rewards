@@ -1,16 +1,28 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Gift } from 'lucide-react'
 
 export default function AuthPage() {
-  const [isSignUp, setIsSignUp] = useState(false)
+  const [searchParams] = useSearchParams()
+  const referralCode = searchParams.get('ref')
+  
+  // Auto-switch to signup mode if referral code is present
+  const [isSignUp, setIsSignUp] = useState(!!referralCode)
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [loading, setLoading] = useState(false)
   const { signIn, signUp } = useAuth()
+
+  // Show referral code notification
+  useEffect(() => {
+    if (referralCode) {
+      toast.success('Referral link detected! Sign up to claim your bonus.', { icon: '🎁' })
+    }
+  }, [referralCode])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,7 +35,7 @@ export default function AuthPage() {
           setLoading(false)
           return
         }
-        const { error } = await signUp(email, password, displayName)
+        const { error } = await signUp(email, password, displayName, referralCode || undefined)
         if (error) {
           toast.error(error.message)
         } else {
@@ -70,6 +82,19 @@ export default function AuthPage() {
               : 'Sign in to access your rewards'}
           </p>
         </div>
+
+        {/* Referral Banner */}
+        {referralCode && (
+          <div className="bg-gradient-to-r from-purple-100 to-orange-100 rounded-xl p-4 mb-4 flex items-center gap-3 border border-purple-200">
+            <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
+              <Gift className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="font-medium text-gray-900">You've been invited!</p>
+              <p className="text-sm text-gray-600">Sign up now to get started with Flowva</p>
+            </div>
+          </div>
+        )}
 
         {/* Form Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
