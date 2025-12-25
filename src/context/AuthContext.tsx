@@ -47,6 +47,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const processReferral = async (referredUserId: string, referralCode: string) => {
+    console.log('processReferral called with:', { referredUserId, referralCode })
+    
     try {
       // Find the referrer by their referral code
       const { data: referrer, error: referrerError } = await supabase
@@ -55,19 +57,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('referral_code', referralCode)
         .single()
 
+      console.log('Referrer lookup result:', { referrer, referrerError })
+
       if (referrerError || !referrer) {
         console.log('Referral code not found:', referralCode)
         return
       }
 
       // Create referral record
-      const { error: referralError } = await supabase
+      console.log('Attempting to insert referral record...')
+      const { data: referralData, error: referralError } = await supabase
         .from('referrals')
         .insert({
           referrer_id: referrer.id,
           referred_user_id: referredUserId,
           status: 'completed',
         })
+        .select()
+
+      console.log('Referral insert result:', { referralData, referralError })
 
       if (referralError) {
         console.error('Error creating referral:', referralError)
@@ -75,7 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Award points to the referrer
-      const { error: pointsError } = await supabase
+      console.log('Attempting to award points to referrer...')
+      const { data: pointsData, error: pointsError } = await supabase
         .from('point_transactions')
         .insert({
           user_id: referrer.id,
@@ -83,11 +92,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           points_delta: 25,
           description: `Referral bonus - someone joined using your link!`,
         })
+        .select()
+
+      console.log('Points insert result:', { pointsData, pointsError })
 
       if (pointsError) {
         console.error('Error awarding referral points:', pointsError)
       } else {
-        console.log(`Awarded 25 points to referrer ${referrer.id}`)
+        console.log(`Successfully awarded 25 points to referrer ${referrer.id}`)
       }
     } catch (err) {
       console.error('processReferral exception:', err)
@@ -135,7 +147,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Process referral if user signed up with a referral code
       if (referredByCode) {
-        processReferral(userId, referredByCode)
+        console.log('Referral code detected, processing...', referredByCode)
+        // Use setTimeout to ensure the profile is fully created before processing referral
+        setTimeout(async () => {
+          await processReferral(userId, referredByCode)
+        }, 1000)
       }
 
       return data as Profile
