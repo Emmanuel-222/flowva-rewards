@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { UserPlus, Gift } from 'lucide-react'
+import { UserPlus, Gift, Check } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
@@ -8,6 +8,7 @@ export default function SpotlightTool() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
 
+  // Fetch featured spotlight tool
   const { data: spotlight, isLoading } = useQuery({
     queryKey: ['spotlightTool'],
     queryFn: async () => {
@@ -22,9 +23,34 @@ export default function SpotlightTool() {
     },
   })
 
+  // Check if user has already claimed this spotlight
+  const { data: hasClaimed } = useQuery({
+    queryKey: ['spotlightClaimed', user?.id, spotlight?.id],
+    queryFn: async () => {
+      if (!user || !spotlight) return false
+
+      const { data, error } = await supabase
+        .from('point_transactions')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('type', 'spotlight')
+        .ilike('description', `%${spotlight.name}%`)
+        .limit(1)
+
+      if (error) {
+        console.error('Error checking spotlight claim:', error)
+        return false
+      }
+
+      return data && data.length > 0
+    },
+    enabled: !!user && !!spotlight,
+  })
+
   const claimSpotlightMutation = useMutation({
     mutationFn: async () => {
       if (!user || !spotlight) throw new Error('Cannot claim')
+      if (hasClaimed) throw new Error('Already claimed')
 
       // Add points transaction for spotlight
       const { error } = await supabase
@@ -46,9 +72,14 @@ export default function SpotlightTool() {
     onSuccess: () => {
       toast.success(`+${spotlight?.points_reward} points!`)
       queryClient.invalidateQueries({ queryKey: ['totalPoints'] })
+      queryClient.invalidateQueries({ queryKey: ['spotlightClaimed'] })
     },
-    onError: () => {
-      toast.error('Failed to claim reward')
+    onError: (error) => {
+      if (error.message === 'Already claimed') {
+        toast.error('You have already claimed this reward!')
+      } else {
+        toast.error('Failed to claim reward')
+      }
     },
   })
 
@@ -65,7 +96,7 @@ export default function SpotlightTool() {
   // Fallback if no spotlight tool configured
   if (!spotlight) {
     return (
-      <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl p-6 shadow-sm text-white">
+      <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl p-6 shadow-sm text-white relative">
         <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-xs font-medium mb-3">
           Featured
         </span>
@@ -100,7 +131,7 @@ export default function SpotlightTool() {
       {/* Description */}
       <div className="flex items-start gap-2 mb-4">
         <div className="w-5 h-5 bg-white/20 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
-          <span className="text-xs">📅</span>
+          <span className="text-xs"></span>
         </div>
         <div>
           <p className="font-semibold text-sm">
@@ -123,16 +154,27 @@ export default function SpotlightTool() {
           <UserPlus className="w-4 h-4" />
           <span className="text-sm font-medium">Sign up</span>
         </button>
-        <button
-          onClick={() => claimSpotlightMutation.mutate()}
-          disabled={claimSpotlightMutation.isPending}
-          className="flex items-center gap-2 px-4 py-2 bg-pink-500 hover:bg-pink-600 rounded-lg transition-colors"
-        >
-          <Gift className="w-4 h-4" />
-          <span className="text-sm font-medium">
-            Claim {spotlight.points_reward} pts
-          </span>
-        </button>
+        
+        {hasClaimed ? (
+          <button
+            disabled
+            className="flex items-center gap-2 px-4 py-2 bg-green-500/80 rounded-lg cursor-not-allowed"
+          >
+            <Check className="w-4 h-4" />
+            <span className="text-sm font-medium">Claimed</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => claimSpotlightMutation.mutate()}
+            disabled={claimSpotlightMutation.isPending}
+            className="flex items-center gap-2 px-4 py-2 bg-pink-500 hover:bg-pink-600 rounded-lg transition-colors disabled:opacity-50"
+          >
+            <Gift className="w-4 h-4" />
+            <span className="text-sm font-medium">
+              {claimSpotlightMutation.isPending ? 'Claiming...' : `Claim ${spotlight.points_reward} pts`}
+            </span>
+          </button>
+        )}
       </div>
     </div>
   )
