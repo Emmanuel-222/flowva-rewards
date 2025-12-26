@@ -7,6 +7,7 @@ import {
   CreditCard,
   Gift,
   Settings,
+  X,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
@@ -19,13 +20,23 @@ const navItems = [
   { icon: Gift, label: 'Rewards Hub', path: '/rewards' },
 ]
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { profile, signOut } = useAuth()
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-[240px] bg-white border-r border-gray-100 flex flex-col">
+    <aside className={`
+      fixed left-0 top-0 bottom-0 w-[240px] bg-white border-r border-gray-100 flex flex-col z-50
+      transform transition-transform duration-300 ease-in-out
+      lg:translate-x-0
+      ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+    `}>
       {/* Logo */}
-      <div className="p-6">
+      <div className="p-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="relative">
             <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-purple-400 rounded-full flex items-center justify-center">
@@ -38,14 +49,21 @@ export default function Sidebar() {
             Flowva
           </span>
         </div>
+        <button 
+          onClick={onClose}
+          className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+        >
+          <X className="w-5 h-5 text-gray-500" />
+        </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 space-y-1">
+      <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
         {navItems.map(({ icon: Icon, label, path }) => (
           <NavLink
             key={path}
             to={path}
+            onClick={onClose}
             className={({ isActive }) =>
               `flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                 isActive
@@ -62,6 +80,7 @@ export default function Sidebar() {
         <div className="pt-4">
           <NavLink
             to="/settings"
+            onClick={onClose}
             className={({ isActive }) =>
               `flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                 isActive
@@ -79,7 +98,7 @@ export default function Sidebar() {
       {/* User Profile */}
       <div className="p-4 border-t border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
             {profile?.display_name?.charAt(0).toUpperCase() || 'U'}
           </div>
           <div className="flex-1 min-w-0">
