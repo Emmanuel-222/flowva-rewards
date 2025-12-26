@@ -4,7 +4,7 @@ A recreation of the Flowva Rewards Hub page built with React, TypeScript, Tailwi
 
 ##  Live Demo
 
-[View Live Demo](your-deployed-url-here)
+[View Live Demo](https://flowva-rewards-two.vercel.app)
 
 ##  Tech Stack
 
@@ -297,7 +297,7 @@ src/
 
 4. **Spotlight Claims:** Users can claim spotlight points multiple times. In production, you'd track claims per user per spotlight tool.
 
-5. **Mobile Layout:** The sidebar is fixed and doesn't collapse on mobile. A full mobile implementation would add a hamburger menu.
+5. **Mobile Layout:** Fully responsive with hamburger menu on mobile devices.
 
 6. **Profile Creation:** Profiles are created via the app's signup form. If a user is created directly in Supabase dashboard, they won't have a profile record until they sign in through the app.
 
