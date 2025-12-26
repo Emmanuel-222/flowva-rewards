@@ -2,13 +2,19 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
-import { Eye, EyeOff, Gift } from 'lucide-react'
+import { Eye, EyeOff, Gift, AlertCircle } from 'lucide-react'
+
+interface FormErrors {
+  displayName?: string
+  email?: string
+  password?: string
+}
 
 export default function AuthPage() {
   const [searchParams] = useSearchParams()
   const location = useLocation()
   const referralCode = searchParams.get('ref')
-  
+
   // Check if user came via /signup route or has referral code
   const shouldStartWithSignup = location.pathname === '/signup' || !!referralCode
 
@@ -18,6 +24,8 @@ export default function AuthPage() {
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
   const { signIn, signUp } = useAuth()
 
   // Auto-switch to signup mode if referral code is present or on /signup route
@@ -34,17 +42,72 @@ export default function AuthPage() {
     }
   }, [referralCode])
 
+  // Clear errors when switching between sign in/up
+  useEffect(() => {
+    setErrors({})
+    setTouched({})
+  }, [isSignUp])
+
+  const validateEmail = (email: string): string | undefined => {
+    if (!email) return 'Email is required'
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) return 'Please enter a valid email address'
+    return undefined
+  }
+
+  const validatePassword = (password: string): string | undefined => {
+    if (!password) return 'Password is required'
+    if (password.length < 6) return 'Password must be at least 6 characters'
+    if (isSignUp && !/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter'
+    if (isSignUp && !/[0-9]/.test(password)) return 'Password must contain at least one number'
+    return undefined
+  }
+
+  const validateDisplayName = (name: string): string | undefined => {
+    if (!isSignUp) return undefined
+    if (!name.trim()) return 'Name is required'
+    if (name.trim().length < 2) return 'Name must be at least 2 characters'
+    return undefined
+  }
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {
+      email: validateEmail(email),
+      password: validatePassword(password),
+      displayName: validateDisplayName(displayName),
+    }
+    setErrors(newErrors)
+    return !Object.values(newErrors).some(error => error)
+  }
+
+  const handleBlur = (field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }))
+    
+    // Validate individual field on blur
+    if (field === 'email') {
+      setErrors(prev => ({ ...prev, email: validateEmail(email) }))
+    } else if (field === 'password') {
+      setErrors(prev => ({ ...prev, password: validatePassword(password) }))
+    } else if (field === 'displayName') {
+      setErrors(prev => ({ ...prev, displayName: validateDisplayName(displayName) }))
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Mark all fields as touched
+    setTouched({ email: true, password: true, displayName: true })
+    
+    if (!validateForm()) {
+      toast.error('Please fix the errors before submitting')
+      return
+    }
+    
     setLoading(true)
 
     try {
       if (isSignUp) {
-        if (!displayName.trim()) {
-          toast.error('Please enter your name')
-          setLoading(false)
-          return
-        }
         const { error } = await signUp(email, password, displayName, referralCode || undefined)
         if (error) {
           toast.error(error.message)
@@ -66,15 +129,23 @@ export default function AuthPage() {
     }
   }
 
+  const getInputClassName = (field: keyof FormErrors) => {
+    const baseClass = "w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent transition-all"
+    if (touched[field] && errors[field]) {
+      return `${baseClass} border-red-300 focus:ring-red-500 bg-red-50`
+    }
+    return `${baseClass} border-gray-200 focus:ring-purple-500`
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-orange-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <img 
-              src="https://www.flowvahub.com/assets/flowva_icon-DYe7ga1V.png" 
-              alt="Flowva" 
+            <img
+              src="https://www.flowvahub.com/assets/flowva_icon-DYe7ga1V.png"
+              alt="Flowva"
               className="w-12 h-12"
             />
             <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
@@ -117,10 +188,16 @@ export default function AuthPage() {
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  onBlur={() => handleBlur('displayName')}
+                  className={getInputClassName('displayName')}
                   placeholder="John Doe"
-                  required={isSignUp}
                 />
+                {touched.displayName && errors.displayName && (
+                  <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.displayName}
+                  </p>
+                )}
               </div>
             )}
 
@@ -133,10 +210,16 @@ export default function AuthPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                onBlur={() => handleBlur('email')}
+                className={getInputClassName('email')}
                 placeholder="you@example.com"
-                required
               />
+              {touched.email && errors.email && (
+                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" />
+                  {errors.email}
+                </p>
+              )}
             </div>
 
             <div className="relative">
@@ -148,24 +231,32 @@ export default function AuthPage() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                onBlur={() => handleBlur('password')}
+                className={getInputClassName('password')}
                 placeholder=""
-                required
-                minLength={6}
               />
-              <div className="absolute right-2 top-10">
+              <button
+                type="button"
+                className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
+                onClick={() => setShowPassword(!showPassword)}
+              >
                 {showPassword ? (
-                  <EyeOff
-                    className="w-5 h-5 text-gray-500 cursor-pointer"
-                    onClick={() => setShowPassword(false)}
-                  />
+                  <EyeOff className="w-5 h-5" />
                 ) : (
-                  <Eye
-                    className="w-5 h-5 text-gray-500 cursor-pointer"
-                    onClick={() => setShowPassword(true)}
-                  />
+                  <Eye className="w-5 h-5" />
                 )}
-              </div>
+              </button>
+              {touched.password && errors.password && (
+                <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" />
+                  {errors.password}
+                </p>
+              )}
+              {isSignUp && !errors.password && (
+                <p className="mt-1 text-xs text-gray-400">
+                  Min 6 characters, 1 uppercase, 1 number
+                </p>
+              )}
             </div>
 
             <button
