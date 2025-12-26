@@ -32,7 +32,7 @@ export default function PointsBalance() {
 
   // Find next reward tier
   const nextTier = REWARD_TIERS.find(tier => totalPoints < tier.points) || REWARD_TIERS[REWARD_TIERS.length - 1]
-  const prevTierPoints = REWARD_TIERS.find((tier, i) => 
+  const prevTierPoints = REWARD_TIERS.find((_tier, i) => 
     REWARD_TIERS[i + 1]?.points === nextTier.points
   )?.points || 0
   
