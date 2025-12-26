@@ -11,7 +11,7 @@ export default function AuthPage() {
   
   // Check if user came via /signup route or has referral code
   const shouldStartWithSignup = location.pathname === '/signup' || !!referralCode
-  
+
   const [isSignUp, setIsSignUp] = useState(shouldStartWithSignup)
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
@@ -30,7 +30,7 @@ export default function AuthPage() {
   // Show referral code notification
   useEffect(() => {
     if (referralCode) {
-      toast.success('Referral link detected! Sign up to claim your bonus.', { icon: '🎁' })
+      toast.success('Referral link detected! Sign up to claim your bonus.', { icon: '' })
     }
   }, [referralCode])
 
@@ -72,13 +72,11 @@ export default function AuthPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="relative">
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-purple-400 rounded-full flex items-center justify-center">
-                <div className="w-6 h-6 bg-white rounded-full"></div>
-              </div>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-400 rounded-full"></div>
-              <div className="absolute -top-2 left-1/2 w-2 h-2 bg-orange-400 rounded-full"></div>
-            </div>
+            <img 
+              src="https://www.flowvahub.com/assets/flowva_icon-DYe7ga1V.png" 
+              alt="Flowva" 
+              className="w-12 h-12"
+            />
             <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
               Flowva
             </span>
@@ -125,7 +123,7 @@ export default function AuthPage() {
                 />
               </div>
             )}
-            
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email
@@ -141,7 +139,7 @@ export default function AuthPage() {
               />
             </div>
 
-            <div className='relative'>
+            <div className="relative">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Password
               </label>
@@ -151,22 +149,22 @@ export default function AuthPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                placeholder="••••••••"
+                placeholder=""
                 required
                 minLength={6}
               />
               <div className="absolute right-2 top-10">
-                {
-                  showPassword ?
-                  <EyeOff 
-                    className="w-5 h-5 text-gray-500 cursor-pointer" 
-                    onClick={() => setShowPassword(false)} 
-                  /> :
-                  <Eye 
-                    className="w-5 h-5 text-gray-500 cursor-pointer" 
-                    onClick={() => setShowPassword(true)} 
+                {showPassword ? (
+                  <EyeOff
+                    className="w-5 h-5 text-gray-500 cursor-pointer"
+                    onClick={() => setShowPassword(false)}
                   />
-                }
+                ) : (
+                  <Eye
+                    className="w-5 h-5 text-gray-500 cursor-pointer"
+                    onClick={() => setShowPassword(true)}
+                  />
+                )}
               </div>
             </div>
 

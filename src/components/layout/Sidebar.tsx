@@ -38,18 +38,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Logo */}
       <div className="p-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-purple-400 rounded-full flex items-center justify-center">
-              <div className="w-5 h-5 bg-white rounded-full"></div>
-            </div>
-            <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-orange-400 rounded-full"></div>
-            <div className="absolute -top-1.5 left-1/2 w-1.5 h-1.5 bg-orange-400 rounded-full"></div>
-          </div>
+          <img 
+            src="https://www.flowvahub.com/assets/flowva_icon-DYe7ga1V.png" 
+            alt="Flowva" 
+            className="w-10 h-10"
+          />
           <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
             Flowva
           </span>
         </div>
-        <button 
+        <button
           onClick={onClose}
           className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
         >

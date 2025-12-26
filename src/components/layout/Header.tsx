@@ -15,12 +15,11 @@ export default function Header({ onMenuClick }: HeaderProps) {
       </button>
       
       <div className="lg:hidden flex items-center gap-2">
-        <div className="relative">
-          <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-purple-400 rounded-full flex items-center justify-center">
-            <div className="w-4 h-4 bg-white rounded-full"></div>
-          </div>
-          <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-orange-400 rounded-full"></div>
-        </div>
+        <img 
+          src="https://www.flowvahub.com/assets/flowva_icon-DYe7ga1V.png" 
+          alt="Flowva" 
+          className="w-8 h-8"
+        />
         <span className="text-lg font-bold bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
           Flowva
         </span>
