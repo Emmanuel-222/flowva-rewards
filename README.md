@@ -27,7 +27,7 @@ A recreation of the Flowva Rewards Hub page built with React, TypeScript, Tailwi
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/flowva-rewards.git
+git clone https://github.com/Emmanuel-222/flowva-rewards.git
 cd flowva-rewards
 ```
 
@@ -252,54 +252,30 @@ src/
  index.css                # Global styles + Tailwind
 ```
 
+
 ##  Features
 
-### Authentication
-- Email + Password sign up/sign in
-- Protected routes (redirects to login if not authenticated)
-- Persistent sessions via Supabase Auth
-
-### Points System
-- Track total points balance
-- Progress bar toward reward thresholds
-- Multiple ways to earn points (signup bonus, daily streak, referrals)
-
-### Daily Streak
-- Claim daily bonus (+5 points)
-- Visual streak counter
-- Weekday indicator showing current day
-
-### Referral Program
-- Unique referral link per user
-- Copy to clipboard functionality
-- Social sharing (Facebook, Twitter/X, LinkedIn, WhatsApp)
-- Track referral count and points earned
-
-### Rewards Redemption
-- Browse available rewards
-- Filter by: All, Unlocked, Locked, Coming Soon
-- Redeem rewards (deducts points)
-- Visual locked/unlocked states
-
-### UX Polish
-- Loading skeletons for all data fetches
+- Email/password authentication (Supabase Auth)
+- Referral system with bonus points and referral tracking
+- Points balance with tiered progress bar ($5, $10, $25)
+- Rewards catalog and redemption (locked/unlocked/coming soon)
+- Spotlight tool claim (prevents multiple claims)
+- Daily streak tracking and claim
+- Responsive, mobile-friendly UI
+- Loading, empty, and error states handled
+- Input validation with inline error messages
 - Toast notifications for actions and errors
-- Responsive layout (desktop/tablet)
-- Smooth transitions and hover states
+
 
 ##  Assumptions & Trade-offs
 
-1. **Simplified Referral Tracking:** Referrals are stored in the database but the full referral signup flow (verifying referral codes during registration) is not implemented. This would require additional backend logic.
-
-2. **No Email Verification Flow:** For easier testing, email confirmation can be disabled. In production, you'd enable this.
-
-3. **Reward Fulfillment:** Clicking "Redeem" creates a database record and deducts points, but actual fulfillment (sending gift cards, bank transfers) would require additional backend services.
-
-4. **Spotlight Claims:** Users can claim spotlight points multiple times. In production, you'd track claims per user per spotlight tool.
-
-5. **Mobile Layout:** Fully responsive with hamburger menu on mobile devices.
-
-6. **Profile Creation:** Profiles are created via the app's signup form. If a user is created directly in Supabase dashboard, they won't have a profile record until they sign in through the app.
+1. **Email/Password Auth Only:** No OAuth (Google/Apple) for demo speed. Can be added for production.
+2. **No Email Verification Flow:** For easier testing, email confirmation is not enforced. In production, enable this.
+3. **Reward Fulfillment:** Redeeming a reward only creates a database record and deducts points. Actual fulfillment (gift cards, transfers) would require backend automation.
+4. **Spotlight Claims:** Users can only claim each spotlight tool once (logic enforced in frontend and database).
+5. **Direct Supabase Usage:** All authentication and queries are handled directly from the frontend using Supabase client.
+6. **UI Match:** UI is matched as closely as possible to FlowvaHub, but minor pixel differences may exist.
+7. **Profile Creation:** Profiles are created via the app's signup form. If a user is created directly in Supabase dashboard, they won't have a profile record until they sign in through the app.
 
 ##  Deployment
 
@@ -347,4 +323,4 @@ MIT
 
 ---
 
-Built with  for the Flowva assessment
+Built for the Flowva assessment
