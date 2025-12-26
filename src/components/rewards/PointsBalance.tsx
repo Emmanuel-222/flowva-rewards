@@ -1,7 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
-import { Star } from 'lucide-react'
+import { Star, Gift } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
+
+// Reward tiers for progress tracking
+const REWARD_TIERS = [
+  { points: 5000, label: '$5 Gift Card' },
+  { points: 10000, label: '$10 Gift Card' },
+  { points: 25000, label: '$25 Gift Card' },
+]
 
 export default function PointsBalance() {
   const { user } = useAuth()
@@ -23,16 +30,26 @@ export default function PointsBalance() {
     enabled: !!user,
   })
 
-  const targetPoints = 5000 // $5 Gift Card threshold
-  const progressPercent = Math.min((totalPoints / targetPoints) * 100, 100)
+  // Find next reward tier
+  const nextTier = REWARD_TIERS.find(tier => totalPoints < tier.points) || REWARD_TIERS[REWARD_TIERS.length - 1]
+  const prevTierPoints = REWARD_TIERS.find((tier, i) => 
+    REWARD_TIERS[i + 1]?.points === nextTier.points
+  )?.points || 0
+  
+  const pointsInCurrentTier = totalPoints - prevTierPoints
+  const tierRange = nextTier.points - prevTierPoints
+  const progressPercent = totalPoints >= nextTier.points 
+    ? 100 
+    : Math.min((pointsInCurrentTier / tierRange) * 100, 100)
+  
+  const pointsToNext = Math.max(nextTier.points - totalPoints, 0)
 
   const getMotivationalText = () => {
     if (totalPoints === 0) return "Start earning points today!"
-    if (totalPoints < 100) return "Just getting started — keep earning points!"
-    if (totalPoints < 500) return "Great progress! Keep it up!"
-    if (totalPoints < 2500) return "You're on fire! Halfway there!"
-    if (totalPoints < 5000) return "Almost there! Keep pushing!"
-    return "🎉 You can redeem a reward!"
+    if (pointsToNext === 0) return " You can redeem a reward!"
+    if (pointsToNext <= 500) return "Almost there! So close!"
+    if (pointsToNext <= 2000) return "Great progress! Keep going!"
+    return "Keep earning to unlock rewards!"
   }
 
   if (isLoading) {
@@ -49,37 +66,53 @@ export default function PointsBalance() {
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-5 h-5 text-purple-600">
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
-          </svg>
-        </div>
+        <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
         <h3 className="font-semibold text-gray-900">Points Balance</h3>
       </div>
 
       {/* Points Display */}
       <div className="flex items-end justify-between mb-4">
-        <span className="text-5xl font-bold text-gray-900">{totalPoints}</span>
-        <Star className="w-10 h-10 text-yellow-400 fill-yellow-400" />
+        <div>
+          <span className="text-5xl font-bold text-gray-900">{totalPoints.toLocaleString()}</span>
+          <span className="text-gray-400 ml-2">pts</span>
+        </div>
+        <div className="text-right">
+          <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-full flex items-center justify-center">
+            <Star className="w-6 h-6 text-white fill-white" />
+          </div>
+        </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="mb-2">
-        <div className="flex justify-between text-sm text-gray-500 mb-1">
-          <span>Progress to $5 Gift Card</span>
-          <span>{totalPoints}/{targetPoints}</span>
+      {/* Progress Section */}
+      <div className="bg-gray-50 rounded-xl p-4 mb-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Gift className="w-4 h-4 text-purple-600" />
+            <span className="text-sm font-medium text-gray-700">Next: {nextTier.label}</span>
+          </div>
+          <span className="text-sm text-purple-600 font-semibold">
+            {pointsToNext > 0 ? `${pointsToNext.toLocaleString()} pts to go` : 'Unlocked!'}
+          </span>
         </div>
-        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+        
+        {/* Progress Bar */}
+        <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-purple-500 to-purple-600 rounded-full transition-all duration-500"
+            className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-700 ease-out"
             style={{ width: `${progressPercent}%` }}
           />
+        </div>
+        
+        {/* Progress Labels */}
+        <div className="flex justify-between mt-1">
+          <span className="text-xs text-gray-400">{prevTierPoints.toLocaleString()}</span>
+          <span className="text-xs text-gray-400">{nextTier.points.toLocaleString()}</span>
         </div>
       </div>
 
       {/* Motivational Text */}
       <p className="text-sm text-gray-500 flex items-center gap-1">
-        <span>🎯</span> {getMotivationalText()}
+        <span></span> {getMotivationalText()}
       </p>
     </div>
   )
